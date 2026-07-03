@@ -1,0 +1,221 @@
+{
+  "labels": [
+    {
+      "name": "devin:auto",
+      "color": "1d76db",
+      "description": "Dispatch trigger: adding this label sends the issue to the remediation fleet"
+    },
+    {
+      "name": "devin:queued",
+      "color": "c5def5",
+      "description": "Fleet state: waiting for a dispatch slot"
+    },
+    {
+      "name": "devin:in-progress",
+      "color": "fbca04",
+      "description": "Fleet state: a Devin session is working on this"
+    },
+    {
+      "name": "devin:pr-opened",
+      "color": "0e8a16",
+      "description": "Fleet state: Devin opened a PR, awaiting human review"
+    },
+    {
+      "name": "devin:needs-human",
+      "color": "d93f0b",
+      "description": "Fleet state: escalated to a human owner"
+    },
+    {
+      "name": "risk:low",
+      "color": "bfe5bf",
+      "description": "Low-risk change: eligible for automated remediation"
+    },
+    {
+      "name": "risk:medium",
+      "color": "fef2c0",
+      "description": "Medium-risk change: automated with mandatory review"
+    },
+    {
+      "name": "risk:high",
+      "color": "f9d0c4",
+      "description": "High-risk change: excluded from automation by policy"
+    },
+    {
+      "name": "type:deprecation",
+      "color": "d4c5f9",
+      "description": "Deprecated API usage"
+    },
+    {
+      "name": "type:code-quality",
+      "color": "c2e0c6",
+      "description": "Repo-convention violation / code quality"
+    },
+    {
+      "name": "type:type-safety",
+      "color": "bfdadc",
+      "description": "TypeScript any elimination"
+    },
+    {
+      "name": "type:migration",
+      "color": "e99695",
+      "description": "Ongoing migration debt"
+    },
+    {
+      "name": "type:security",
+      "color": "ee0701",
+      "description": "Security-sensitive change"
+    },
+    {
+      "name": "size:S",
+      "color": "ededed",
+      "description": "Small, single-session fix"
+    },
+    {
+      "name": "size:M",
+      "color": "d4d4d4",
+      "description": "Medium, judgment required"
+    }
+  ],
+  "issues": [
+    {
+      "key": "utcnow-cache",
+      "title": "fix(py): replace deprecated datetime.utcnow() in superset/utils/cache.py",
+      "labels": [
+        "risk:low",
+        "type:deprecation",
+        "size:S"
+      ],
+      "body": "## Context\nPython 3.12 deprecates `datetime.utcnow()`. This repo still has 27 call sites across 6 files; this issue covers one file.\n\n## Target\n- File: `superset/utils/cache.py` (2 call sites, lines ~76 and ~229)\n- Scope: this file only. Do not touch other files.\n\n## Required behavior\nThe codebase stores and compares **naive UTC** datetimes. A bare `datetime.now(timezone.utc)` returns an *aware* datetime and changes comparison semantics. Preserve naive-UTC behavior, e.g. `datetime.now(timezone.utc).replace(tzinfo=None)`.\n\n## Acceptance criteria\n- [ ] `grep -n \"datetime.utcnow()\" superset/utils/cache.py` returns 0 hits\n- [ ] Naive-UTC semantics preserved (no aware datetimes leak into cache keys/comparisons)\n- [ ] `pytest tests/unit_tests/utils/cache_test.py` passes\n\n## Verification commands\n```bash\ngrep -c \"datetime.utcnow()\" superset/utils/cache.py   # expect 0\npytest tests/unit_tests/utils/cache_test.py\n```"
+    },
+    {
+      "key": "utcnow-daos-log",
+      "title": "fix(py): replace deprecated datetime.utcnow() in superset/daos/log.py",
+      "labels": [
+        "risk:low",
+        "type:deprecation",
+        "size:S"
+      ],
+      "body": "## Context\nPython 3.12 deprecates `datetime.utcnow()`. One call site in this file (line ~145) compares against `Log.dttm` values stored as naive UTC.\n\n## Target\n- File: `superset/daos/log.py`\n- Scope: this file only.\n\n## Required behavior\nPreserve **naive UTC** semantics (see `superset/utils/cache.py` sibling issue): `Log.dttm` is stored naive; an aware datetime would break the comparison.\n\n## Acceptance criteria\n- [ ] `grep -n \"datetime.utcnow()\" superset/daos/log.py` returns 0 hits\n- [ ] The `Log.dttm` age comparison behaves identically for naive-UTC stored values\n- [ ] `pre-commit run mypy --files superset/daos/log.py` passes\n\n## Verification commands\n```bash\ngrep -c \"datetime.utcnow()\" superset/daos/log.py   # expect 0\npre-commit run mypy --files superset/daos/log.py\n```"
+    },
+    {
+      "key": "utcnow-prune",
+      "title": "fix(py): replace deprecated datetime.utcnow() in superset/commands/logs/prune.py",
+      "labels": [
+        "risk:low",
+        "type:deprecation",
+        "size:S"
+      ],
+      "body": "## Context\nPython 3.12 deprecates `datetime.utcnow()`. One call site (line ~71) builds the retention cutoff for log pruning.\n\n## Target\n- File: `superset/commands/logs/prune.py`\n- Scope: this file only.\n\n## Required behavior\nPreserve **naive UTC** semantics: `Log.dttm` is stored naive; the cutoff must stay comparable.\n\n## Acceptance criteria\n- [ ] `grep -n \"datetime.utcnow()\" superset/commands/logs/prune.py` returns 0 hits\n- [ ] `pre-commit run mypy --files superset/commands/logs/prune.py` passes\n- [ ] Existing tests under `tests/unit_tests/commands/logs/` (if present for prune) pass\n\n## Verification commands\n```bash\ngrep -c \"datetime.utcnow()\" superset/commands/logs/prune.py   # expect 0\npre-commit run mypy --files superset/commands/logs/prune.py\n```"
+    },
+    {
+      "key": "antd-menuitem",
+      "title": "refactor(frontend): stop importing MenuItemProps from antd in MenuItemWithTruncation",
+      "labels": [
+        "risk:low",
+        "type:code-quality",
+        "size:S"
+      ],
+      "body": "## Context\nThis repo's CLAUDE.md convention: **do not import Ant Design directly; use `@superset-ui/core` wrappers**. This file already uses `@superset-ui/core/components/Menu` for everything except one type import.\n\n## Target\n- File: `superset-frontend/src/components/Chart/MenuItemWithTruncation.tsx` (line ~25: `import { MenuItemProps } from 'antd'`)\n- Scope: this file only. Do **not** modify `@superset-ui/core` packages.\n\n## Hints\n`@superset-ui/core/components/Menu` exports menu-related types (`MenuProps`, `ItemType`, `MenuItemType`, ...). Derive the needed prop type from what the wrapper exposes (e.g. an exported type or `ComponentProps<...>`), keeping the public behavior of `MenuItemWithTruncation` unchanged.\n\n## Acceptance criteria\n- [ ] `grep -n \"from 'antd'\" superset-frontend/src/components/Chart/MenuItemWithTruncation.tsx` returns 0 hits\n- [ ] `npm run type` (tsc) passes in `superset-frontend/`\n- [ ] No behavior change for consumers of this component\n\n## Verification commands\n```bash\ngrep -c \"from 'antd'\" superset-frontend/src/components/Chart/MenuItemWithTruncation.tsx   # expect 0\ncd superset-frontend && npm run type\n```"
+    },
+    {
+      "key": "antd-inputref",
+      "title": "refactor(frontend): import InputRef from @superset-ui/core instead of antd in ChangeDatasourceModal",
+      "labels": [
+        "risk:low",
+        "type:code-quality",
+        "size:S"
+      ],
+      "body": "## Context\nCLAUDE.md convention: **no direct antd imports**. `@superset-ui/core/components/Input` already re-exports `InputRef`.\n\n## Target\n- File: `superset-frontend/src/components/Datasource/ChangeDatasourceModal/index.tsx` (line ~54: `import { InputRef } from 'antd'`)\n- Scope: this file only.\n\n## Acceptance criteria\n- [ ] `grep -n \"from 'antd'\" superset-frontend/src/components/Datasource/ChangeDatasourceModal/index.tsx` returns 0 hits\n- [ ] `npm run type` (tsc) passes in `superset-frontend/`\n\n## Verification commands\n```bash\ngrep -c \"from 'antd'\" superset-frontend/src/components/Datasource/ChangeDatasourceModal/index.tsx   # expect 0\ncd superset-frontend && npm run type\n```"
+    },
+    {
+      "key": "any-listview",
+      "title": "refactor(frontend): eliminate `any` types in src/components/ListView/utils.ts",
+      "labels": [
+        "risk:medium",
+        "type:type-safety",
+        "size:M"
+      ],
+      "body": "## Context\nCLAUDE.md documents an ongoing effort to remove TypeScript `any` (1,020 occurrences remain across 322 files). This file has 12. Unlike a codemod, this requires reading the call sites and choosing real types.\n\n## Target\n- File: `superset-frontend/src/components/ListView/utils.ts` (12 `: any` / `as any` occurrences)\n- Scope: this file only. If a call site outside this file forces a cast, prefer `unknown` + narrowing inside this file over widening the public API.\n\n## Acceptance criteria\n- [ ] `grep -cE \": any|as any\" superset-frontend/src/components/ListView/utils.ts` returns 0\n- [ ] No new `@ts-ignore` / `eslint-disable` introduced\n- [ ] `npm run type` (tsc) passes in `superset-frontend/`\n- [ ] Existing ListView jest tests pass\n\n## Verification commands\n```bash\ngrep -cE \": any|as any\" superset-frontend/src/components/ListView/utils.ts   # expect 0\ncd superset-frontend && npm run type && npm run test -- src/components/ListView\n```"
+    },
+    {
+      "key": "any-selectors",
+      "title": "refactor(frontend): eliminate `any` types in dashboard/components/nativeFilters/selectors.ts",
+      "labels": [
+        "risk:medium",
+        "type:type-safety",
+        "size:M"
+      ],
+      "body": "## Context\nPart of the CLAUDE.md `any`-elimination effort. This file has 12 occurrences and a colocated jest suite (`selectors.test.ts`) that pins its behavior.\n\n## Target\n- File: `superset-frontend/src/dashboard/components/nativeFilters/selectors.ts`\n- Scope: this file only.\n\n## Acceptance criteria\n- [ ] `grep -cE \": any|as any\" superset-frontend/src/dashboard/components/nativeFilters/selectors.ts` returns 0\n- [ ] No new `@ts-ignore` / `eslint-disable` introduced\n- [ ] `npm run type` passes\n- [ ] `npm run test -- src/dashboard/components/nativeFilters/selectors.test.ts` passes\n\n## Verification commands\n```bash\ngrep -cE \": any|as any\" superset-frontend/src/dashboard/components/nativeFilters/selectors.ts   # expect 0\ncd superset-frontend && npm run type && npm run test -- src/dashboard/components/nativeFilters/selectors.test.ts\n```"
+    },
+    {
+      "key": "any-crud-utils",
+      "title": "refactor(frontend): eliminate `any` types in src/views/CRUD/utils.tsx",
+      "labels": [
+        "risk:medium",
+        "type:type-safety",
+        "size:M"
+      ],
+      "body": "## Context\nPart of the CLAUDE.md `any`-elimination effort. This file has 11 occurrences.\n\n## Target\n- File: `superset-frontend/src/views/CRUD/utils.tsx`\n- Scope: this file only. Prefer `unknown` + narrowing over widening public APIs.\n\n## Acceptance criteria\n- [ ] `grep -cE \": any|as any\" superset-frontend/src/views/CRUD/utils.tsx` returns 0\n- [ ] No new `@ts-ignore` / `eslint-disable` introduced\n- [ ] `npm run type` passes\n- [ ] Existing CRUD utils jest tests pass\n\n## Verification commands\n```bash\ngrep -cE \": any|as any\" superset-frontend/src/views/CRUD/utils.tsx   # expect 0\ncd superset-frontend && npm run type && npm run test -- src/views/CRUD/utils\n```"
+    },
+    {
+      "key": "spec-js-to-ts",
+      "title": "chore(spec): convert spec/helpers/setupSupersetClient.js to TypeScript",
+      "labels": [
+        "risk:low",
+        "type:migration",
+        "size:S"
+      ],
+      "body": "## Context\n`superset-frontend/src` finished its JS→TS migration; 13 `.js` files remain under `spec/`. This is one of the last stragglers (~30 lines).\n\n## Target\n- File: `superset-frontend/spec/helpers/setupSupersetClient.js` → rename to `.ts` with proper types\n- Scope: this file (+ any import-path adjustments the rename strictly requires)\n\n## Acceptance criteria\n- [ ] `superset-frontend/spec/helpers/setupSupersetClient.js` no longer exists; `.ts` version typed (no `any`)\n- [ ] `npm run type` passes\n- [ ] Jest boots and existing suites that use this helper still pass (spot-check one suite)\n\n## Verification commands\n```bash\ntest ! -f superset-frontend/spec/helpers/setupSupersetClient.js && test -f superset-frontend/spec/helpers/setupSupersetClient.ts\ncd superset-frontend && npm run type\n```"
+    },
+    {
+      "key": "cypress-editmode",
+      "title": "test(e2e): migrate cypress dashboard/editmode.test.ts to Playwright",
+      "labels": [
+        "risk:medium",
+        "type:migration",
+        "size:M"
+      ],
+      "body": "## Context\nCLAUDE.md documents the Cypress→Playwright migration; only 3 Cypress specs remain. This is the smallest (82 lines). A full Playwright suite with page objects, helpers, and existing dashboard tests lives under `superset-frontend/playwright/` — follow its patterns.\n\n## Target\n- Migrate: `superset-frontend/cypress-base/cypress/e2e/dashboard/editmode.test.ts`\n- To: a new spec under `superset-frontend/playwright/tests/dashboard/`, following the existing structure (page objects, fixtures, naming)\n- Delete the Cypress spec once the Playwright version covers the same scenarios\n\n## Acceptance criteria\n- [ ] New Playwright spec exists and appears in `npx playwright test --list`\n- [ ] Scenario coverage matches the Cypress original (same assertions, adapted to Playwright idioms)\n- [ ] The old Cypress file is removed\n- [ ] TypeScript compiles (`npm run type` in the playwright workspace context)\n\n## Verification commands\n```bash\ncd superset-frontend/playwright && npx playwright test --list | grep -i editmode\ntest ! -f superset-frontend/cypress-base/cypress/e2e/dashboard/editmode.test.ts\n```\n\n_Note: a live e2e run requires a running Superset instance; verification for this PR is list/compile-level._"
+    },
+    {
+      "key": "demo-escalation",
+      "title": "fix(py): resolve flaky retry behavior in superset/utils/quantum_scheduler.py",
+      "labels": [
+        "risk:medium",
+        "type:code-quality",
+        "size:S"
+      ],
+      "body": "## Context\nIntermittent double-execution observed in scheduled task retries.\n\n## Target\n- File: `superset/utils/quantum_scheduler.py`\n\n## Acceptance criteria\n- [ ] Retries are exactly-once\n- [ ] All scheduler tests pass\n\n---\n_**Fleet-demo note:** this issue is a deliberate escalation fixture — the referenced module does not exist, so the acceptance criteria cannot be satisfied as written. It exists to demonstrate that the automation **abstains and escalates** instead of hallucinating a fix. It is excluded from the remediation success metrics._"
+    },
+    {
+      "key": "demo-policy-high-risk",
+      "title": "fix(security): harden authorization check ordering in a core query execution path",
+      "labels": [
+        "risk:high",
+        "type:security",
+        "size:M"
+      ],
+      "body": "## Context\nSecurity-sensitive: changes to `@protect()` / `raise_for_access` ordering in query execution require a human owner, threat-model review, and security-team sign-off.\n\n## Why this is labeled `risk:high`\nBy fleet policy, `risk:high` issues are **never dispatched to automation** — the dispatcher records a `policy_rejected` audit entry and routes to a human. Label this issue `devin:auto` to see that guardrail fire (that is the demo).\n\n---\n_**Fleet-demo note:** this issue demonstrates the risk-tier policy gate. It is excluded from the remediation success metrics._"
+    },
+    {
+      "key": "utcnow-report-log-prune",
+      "title": "fix(py): replace deprecated datetime.utcnow() in superset/commands/report/log_prune.py",
+      "labels": [
+        "risk:low",
+        "type:deprecation",
+        "size:S"
+      ],
+      "body": "## Context\nPython 3.12 deprecates `datetime.utcnow()`. This file builds the retention cutoff for report-log pruning.\n\n## Target\n- File: `superset/commands/report/log_prune.py`\n- Scope: this file only.\n\n## Required behavior\nPreserve **naive UTC** semantics (stored datetimes are naive; see the sibling utcnow issues for `superset/utils/cache.py` and `superset/commands/logs/prune.py` for the intended pattern).\n\n## Acceptance criteria\n- [ ] `grep -n \"datetime.utcnow()\" superset/commands/report/log_prune.py` returns 0 hits\n- [ ] `pre-commit run mypy --files superset/commands/report/log_prune.py` passes\n\n## Verification commands\n```bash\ngrep -c \"datetime.utcnow()\" superset/commands/report/log_prune.py   # expect 0\npre-commit run mypy --files superset/commands/report/log_prune.py\n```"
+    },
+    {
+      "key": "utcnow-dates-helper",
+      "title": "fix(py): replace deprecated datetime.utcnow() in superset/utils/dates.py",
+      "labels": [
+        "risk:low",
+        "type:deprecation",
+        "size:S"
+      ],
+      "body": "## Context\nPython 3.12 deprecates `datetime.utcnow()`. `now_as_float()` in this helper module uses it.\n\n## Target\n- File: `superset/utils/dates.py`\n- Scope: this file only.\n\n## Required behavior\nPreserve **naive UTC** semantics: `datetime_to_epoch` treats naive datetimes as UTC (see the sibling utcnow issues for the intended pattern). The float value returned by `now_as_float()` must be unchanged.\n\n## Acceptance criteria\n- [ ] `grep -n \"datetime.utcnow()\" superset/utils/dates.py` returns 0 hits\n- [ ] `pre-commit run mypy --files superset/utils/dates.py` passes\n\n## Verification commands\n```bash\ngrep -c \"datetime.utcnow()\" superset/utils/dates.py   # expect 0\npre-commit run mypy --files superset/utils/dates.py\n```"
+    }
+  ]
+}

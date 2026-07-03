@@ -1,0 +1,12 @@
+{
+  "event": "pull_request",
+  "note": "Sent last, after the fleet has opened the PR for issue 9001: a human merged it.",
+  "payload": {
+    "action": "closed",
+    "sender": { "login": "demo-human", "type": "User" },
+    "pull_request": {
+      "html_url": "https://github.com/your-org/superset/pull/99001",
+      "merged": true
+    }
+  }
+}

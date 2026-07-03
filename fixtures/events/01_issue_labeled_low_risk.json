@@ -1,0 +1,19 @@
+{
+  "event": "issues",
+  "payload": {
+    "action": "labeled",
+    "label": { "name": "devin:auto" },
+    "sender": { "login": "demo-human", "type": "User" },
+    "issue": {
+      "number": 9001,
+      "title": "refactor(py): replace deprecated pkg_resources in redshift.py",
+      "body": "## Context\nCLAUDE.md: keep Python deprecation-free.\n\n## Target\n- File: `superset/db_engine_specs/redshift.py`\n- Scope: this file only\n\n## Acceptance Criteria\n- [ ] `grep -r \"pkg_resources\" superset/db_engine_specs/redshift.py` returns 0 hits\n- [ ] `pytest tests/unit_tests/db_engine_specs/test_redshift.py` passes\n",
+      "labels": [
+        { "name": "devin:auto" },
+        { "name": "risk:low" },
+        { "name": "type:deprecation" },
+        { "name": "size:S" }
+      ]
+    }
+  }
+}

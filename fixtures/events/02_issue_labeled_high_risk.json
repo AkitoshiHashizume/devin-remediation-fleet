@@ -1,0 +1,18 @@
+{
+  "event": "issues",
+  "payload": {
+    "action": "labeled",
+    "label": { "name": "devin:auto" },
+    "sender": { "login": "demo-human", "type": "User" },
+    "issue": {
+      "number": 9002,
+      "title": "fix(security): tighten authorization check in a core query path",
+      "body": "Security-sensitive change; requires a human owner by policy.",
+      "labels": [
+        { "name": "devin:auto" },
+        { "name": "risk:high" },
+        { "name": "type:security" }
+      ]
+    }
+  }
+}

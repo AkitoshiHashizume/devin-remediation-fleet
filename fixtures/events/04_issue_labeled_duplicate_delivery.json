@@ -1,0 +1,19 @@
+{
+  "event": "issues",
+  "note": "Same delivery GUID is re-sent by replay_events.py to demonstrate webhook redelivery safety.",
+  "payload": {
+    "action": "labeled",
+    "label": { "name": "devin:auto" },
+    "sender": { "login": "demo-human", "type": "User" },
+    "issue": {
+      "number": 9001,
+      "title": "refactor(py): replace deprecated pkg_resources in redshift.py",
+      "body": "(duplicate redelivery of issue 9001)",
+      "labels": [
+        { "name": "devin:auto" },
+        { "name": "risk:low" },
+        { "name": "type:deprecation" }
+      ]
+    }
+  }
+}

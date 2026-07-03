@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Remediation Fleet</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: -apple-system, "Segoe UI", sans-serif; margin: 2rem; }
+    h1 { font-size: 1.3rem; } h2 { font-size: 1.05rem; margin-top: 2rem; }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .tile { border: 1px solid #8884; border-radius: 10px; padding: 12px 14px; }
+    .tile .v { font-size: 1.6rem; font-weight: 700; overflow-wrap: anywhere; }
+    .tile .l { font-size: .78rem; opacity: .75; }
+    table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+    th, td { border-bottom: 1px solid #8883; padding: 6px 8px; text-align: left; }
+    .badge { padding: 2px 8px; border-radius: 999px; font-size: .75rem; border: 1px solid #8886; }
+    .s-done { background: #16a34a22; } .s-pr_opened { background: #2563eb22; }
+    .s-running, .s-session_created { background: #eab30822; }
+    .s-needs_human, .s-policy_rejected { background: #dc262622; }
+    .s-failed, .s-rejected { background: #7c3aed22; }
+    .warn { color: #dc2626; font-weight: 600; }
+    .note { font-size: .8rem; opacity: .7; }
+  </style>
+</head>
+<body>
+  <h1>🛠 Devin Remediation Fleet
+    {% if m.mock_mode %}<span class="badge">MOCK MODE</span>{% endif %}
+    {% if m.kill_switch %}<span class="badge warn">KILL SWITCH ON</span>{% endif %}
+  </h1>
+
+  <h2>Is this working? — the VP view</h2>
+  <div class="tiles">
+    <div class="tile"><div class="v">{{ m.prs_opened }}</div><div class="l">PRs opened</div></div>
+    <div class="tile"><div class="v">{{ m.prs_merged }}</div><div class="l">PRs merged (= issues remediated)</div></div>
+    <div class="tile"><div class="v">{{ m.awaiting_review }}</div><div class="l">PRs awaiting human review</div></div>
+    <div class="tile"><div class="v">{{ m.needs_human }}</div><div class="l">Escalated to humans</div></div>
+    <div class="tile"><div class="v">{{ m.median_time_to_pr_min if m.median_time_to_pr_min is not none else "–" }}</div><div class="l">Median time-to-PR (min)</div></div>
+    <div class="tile"><div class="v">{{ m.sessions_today }}/{{ m.daily_budget }}</div><div class="l">Daily session budget used</div></div>
+  </div>
+
+  <h2>Engineering view</h2>
+  <div class="tiles">
+    {% for state, count in m.by_state.items() %}
+    <div class="tile"><div class="v">{{ count }}</div><div class="l">{{ state }}</div></div>
+    {% endfor %}
+    {% for cls, count in m.failure_breakdown.items() %}
+    <div class="tile"><div class="v">{{ count }}</div><div class="l">failure: {{ cls }}</div></div>
+    {% endfor %}
+  </div>
+
+  <h2>Audit trail — every task, traceable end to end</h2>
+  <table>
+    <tr><th>Issue</th><th>Attempt</th><th>Type</th><th>Risk</th><th>State</th>
+        <th>Failure</th><th>Devin session</th><th>PR</th><th>Updated (UTC)</th></tr>
+    {% for t in tasks %}
+    <tr>
+      <td>#{{ t.issue_number }} {{ (t.title or "")[:48] }}</td>
+      <td>{{ t.attempt }}</td>
+      <td>{{ t.task_type }}</td>
+      <td>{{ t.risk }}</td>
+      <td><span class="badge s-{{ t.state }}">{{ t.state }}</span></td>
+      <td>{{ t.failure_class or "" }}</td>
+      <td>{% if t.session_url %}<a href="{{ t.session_url }}">session</a>{% endif %}</td>
+      <td>{% if t.pr_url %}<a href="{{ t.pr_url }}">PR</a> ({{ t.pr_state or "open" }}){% endif %}</td>
+      <td>{{ t.updated_at[:19] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <p class="note">Metrics are recomputed from the raw audit store on every load ·
+    n is small — treat medians as illustrative · live-updates every 5s ·
+    <a href="/metrics.json">metrics.json</a></p>
+
+  <script>
+    // Silent live refresh: re-fetch the page and swap the body in place —
+    // no flash, no scroll reset. (innerHTML swaps do not re-execute this
+    // script, so the interval never stacks.)
+    setInterval(async () => {
+      try {
+        const resp = await fetch(location.href, { cache: "no-store" });
+        if (!resp.ok) return;
+        const doc = new DOMParser().parseFromString(await resp.text(), "text/html");
+        document.body.innerHTML = doc.body.innerHTML;
+      } catch { /* server briefly down (restart): keep last view, retry next tick */ }
+    }, 5000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "event": "issues",
+  "payload": {
+    "action": "labeled",
+    "label": { "name": "devin:auto" },
+    "sender": { "login": "demo-human", "type": "User" },
+    "issue": {
+      "number": 9003,
+      "title": "fix(py): resolve flaky behavior in scheduler edge case",
+      "body": "See `superset/utils/quantum_scheduler.py` (acceptance criteria reference a module that does not exist — escalation demo).",
+      "labels": [
+        { "name": "devin:auto" },
+        { "name": "risk:medium" },
+        { "name": "type:code-quality" }
+      ]
+    }
+  }
+}

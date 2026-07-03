@@ -1,0 +1,32 @@
+services:
+  # Real mode — requires a filled .env (see .env.example)
+  orchestrator:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./data:/app/data
+
+  # Keyless demo (make demo-docker): runs the full mock flow in one container
+  demo:
+    build: .
+    profiles: ["demo"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      MOCK_MODE: "1"
+      GITHUB_WEBHOOK_SECRET: change-me
+      BIND_HOST: 0.0.0.0
+    command: bash scripts/demo.sh
+
+  # Forwards GitHub webhooks from a smee.io channel to the orchestrator.
+  # Enable with: docker compose --profile smee up
+  smee:
+    image: node:20-slim
+    profiles: ["smee"]
+    command: npx --yes smee-client --url ${SMEE_URL} --target http://orchestrator:8000/webhook
+    depends_on:
+      - orchestrator
