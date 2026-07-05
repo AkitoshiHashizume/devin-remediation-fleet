@@ -8,6 +8,14 @@ dependency hygiene — into reviewed pull requests, by dispatching one
 Humans stop being the ones who *fix* this class of work and become the ones
 who *review and merge* it.
 
+## Take-home submission
+
+| Deliverable | Link |
+|---|---|
+| **Demo video** — 5 min, framed for a VP of Engineering + senior ICs | `devin-takehome-demo.mp4` (submitted alongside this repo) |
+| **Solution repo** — this repo (Docker; keyless 2-minute demo) | https://github.com/AkitoshiHashizume/devin-remediation-fleet |
+| **Superset fork** — seeded issues + merged Devin PRs | https://github.com/AkitoshiHashizume/superset |
+
 ```
 GitHub issue labeled `devin:auto`          ┌──────────────────────────────┐
         │  (webhook, HMAC-verified)        │  Orchestrator (this repo)    │
